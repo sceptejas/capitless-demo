@@ -1,0 +1,69 @@
+{
+  "chainId": 11155111,
+  "orderSizeWeth": "0.001",
+  "directCostUsdc": "0",
+  "quoteUsdc": "1000",
+  "routeCostUsdc": "998",
+  "makerProceedsUsdc": "2",
+  "takerReceivedWeth": "0.001",
+  "makerWethBefore": "0",
+  "makerWethAfter": "0",
+  "txHash": "0xPLACEHOLDER_FILL_WITH_REAL_TX_HASH",
+  "steps": [
+    { "kind": "info", "label": "order",  "text": "signed by strategy signer 0x8809…0875  nonce 0  expiry +1h" },
+    { "kind": "ok",   "label": "check",  "text": "signature OK · signer authorised · route hash OK · policyVersion OK" },
+    { "kind": "info", "label": "pull",   "text": "1,000 USDC from taker 0xb04b…69EE" },
+    { "kind": "info", "label": "unlock", "text": "PoolManager.unlock() — entering flash accounting session" },
+    { "kind": "info", "label": "swap",   "text": "leg A  hooked pool (dynamic fee 30 bps)  → 100 wei WETH" },
+    { "kind": "ok",   "label": "take",   "text": "100 wei WETH → taker (Maker never touched WETH)" },
+    { "kind": "ok",   "label": "settle", "text": "USDC owed to pools: 998" },
+    { "kind": "ok",   "label": "check",  "text": "all currency deltas = 0" },
+    { "kind": "ok",   "label": "pay",    "text": "maker proceeds: 2 USDC (spread)" },
+    { "kind": "ok",   "label": "done",   "text": "tx 0xPLACEHOLDER_FILL_WITH_REAL_TX_HASH" }
+  ],
+  "failures": [
+    {
+      "name": "Expired order",
+      "reason": "OrderExpired",
+      "ref": "",
+      "steps": [
+        { "kind": "info",  "label": "order",  "text": "signed  expiry already passed (block.timestamp > expiry)" },
+        { "kind": "error", "label": "REVERT", "text": "OrderExpired(expiry=1700000000, now=1794021012)" }
+      ]
+    },
+    {
+      "name": "Replayed nonce",
+      "reason": "NonceAlreadyUsed",
+      "ref": "",
+      "steps": [
+        { "kind": "info",  "label": "order",  "text": "nonce 0 already consumed in previous execution" },
+        { "kind": "error", "label": "REVERT", "text": "NonceAlreadyUsed(maker=0x8809…0875, nonce=0)" }
+      ]
+    },
+    {
+      "name": "Proceeds below minimum",
+      "reason": "InsufficientMakerProceeds",
+      "ref": "",
+      "steps": [
+        { "kind": "info",  "label": "settle", "text": "actual proceeds=2  minMakerProceeds=50000" },
+        { "kind": "error", "label": "REVERT", "text": "InsufficientMakerProceeds(actual=2, minimum=50000)" }
+      ]
+    },
+    {
+      "name": "Unauthorised callback",
+      "reason": "NotExecutor",
+      "ref": "",
+      "steps": [
+        { "kind": "info",  "label": "call",   "text": "stranger calls adapter.execute() directly" },
+        { "kind": "error", "label": "REVERT", "text": "NotExecutor(caller=0x1337…1337)" }
+      ]
+    }
+  ],
+  "cre": {
+    "feeBeforeBps": 3000,
+    "feeAfterBps":  7500,
+    "policyVersion": 2,
+    "reportTx": "0xPLACEHOLDER_CRE_REPORT_TX",
+    "requoteQuoteUsdc": "2500"
+  }
+}

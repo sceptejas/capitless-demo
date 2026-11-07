@@ -1,0 +1,21 @@
+{
+  "_note": "Snapshot of seeded Sepolia pools. Used for Playground simulation only.",
+  "snapshotBlock": 12080511,
+  "usdcPerWeth": 2000,
+  "pools": [
+    {
+      "id": "hooked",
+      "feeBps": 30,
+      "hookFeeBps": 30,
+      "liquidityUnits": 200000,
+      "maxWethOut": 0.005
+    },
+    {
+      "id": "plain",
+      "feeBps": 30,
+      "hookFeeBps": 0,
+      "liquidityUnits": 200000,
+      "maxWethOut": 0.005
+    }
+  ]
+}

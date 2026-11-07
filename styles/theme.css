@@ -1,46 +1,40 @@
 /* ============================================================
-   CAPITLESS design tokens — change here, restyles everything.
-   Palette inspired by: dark slate bg, teal accent, amber warn.
+   CAPITLESS — Brutal Modernist Design System
+   Black & white. Heavy type. Zero decoration.
    ============================================================ */
 
 :root {
-  /* Backgrounds */
-  --bg:       #0B1220;
-  --surface:  #111827;
-  --glass:    rgba(255, 255, 255, 0.05);
-  --glass-solid: #161f30;
+  --bg:       #080808;
+  --surface:  #111111;
+  --surface-2:#1A1A1A;
+  --glass:    #111111;
+  --glass-solid: #111111;
 
-  /* Borders */
-  --border:   rgba(255, 255, 255, 0.10);
-  --border-accent: rgba(20, 184, 166, 0.35);
+  --border:   #2E2E2E;
+  --border-hi: #404040;
+  --border-accent: #FFFFFF;
 
-  /* Text */
-  --text:     #F0F4F8;
-  --muted:    #64748B;
-  --muted-2:  #94A3B8;
+  --text:     #F5F5F5;
+  --muted:    #777777;
+  --muted-2:  #999999;
 
-  /* Accent — teal */
-  --accent:   #14B8A6;
-  --accent-dim: rgba(20, 184, 166, 0.15);
-  --accent-glow: rgba(20, 184, 166, 0.08);
+  --accent:   #FFFFFF;
+  --accent-dim: rgba(255,255,255,0.06);
+  --accent-glow: rgba(255,255,255,0.03);
 
-  /* Semantic */
   --ok:       #22C55E;
   --warn:     #F59E0B;
   --danger:   #EF4444;
-  --info:     #60A5FA;
+  --info:     #AAAAAA;
 
-  /* Blobs (accent blobs behind glass) */
-  --blob-1:   rgba(20, 184, 166, 0.12);
-  --blob-2:   rgba(99, 102, 241, 0.10);
-  --blob-3:   rgba(245, 158, 11, 0.07);
+  --blob-1: transparent;
+  --blob-2: transparent;
+  --blob-3: transparent;
 
-  /* Radius */
-  --radius:   16px;
-  --radius-sm: 8px;
-  --radius-lg: 24px;
+  --radius:   0px;
+  --radius-sm: 0px;
+  --radius-lg: 0px;
 
-  /* Shadow */
-  --shadow:   0 4px 32px rgba(0, 0, 0, 0.45);
-  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.30);
+  --shadow: none;
+  --shadow-sm: none;
 }

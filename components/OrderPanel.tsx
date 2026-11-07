@@ -1,18 +1,10 @@
 "use client";
 import { useState } from "react";
-import GlassPanel from "./GlassPanel";
 import { config } from "@/lib/config";
 import { simulate } from "@/lib/simulate";
 import runData from "@/data/run.json";
 
 export type Mode = "recorded" | "playground";
-
-interface Props {
-  mode: Mode;
-  onModeChange: (m: Mode) => void;
-  onRun: (lines: import("./Terminal").TerminalLine[]) => void;
-  onResult: (r: RecordedResult | SimResult) => void;
-}
 
 export interface RecordedResult {
   kind: "recorded";
@@ -37,18 +29,26 @@ export interface SimResult {
   noQuoteReason?: string;
 }
 
+interface Props {
+  mode: Mode;
+  onModeChange: (m: Mode) => void;
+  onRun: (lines: import("./Terminal").TerminalLine[]) => void;
+  onResult: (r: RecordedResult | SimResult) => void;
+}
+
 const PRESETS = config.wethPresets as readonly number[];
 
 function fmtUsdc(n: string | number) {
   const v = typeof n === "string" ? parseFloat(n) : n;
-  if (isNaN(v)) return "—";
-  return (v / 1e6).toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+  if (isNaN(v) || v === 0) return "—";
+  return (v / 1e6).toFixed(6);
 }
 
-function bar(a: number, b: number) {
-  if (!a || !b) return 50;
-  return Math.round((a / (a + b)) * 100);
-}
+const S: Record<string, React.CSSProperties> = {
+  label: { fontFamily: "'Courier New', monospace", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "#999", display: "block", marginBottom: 8 },
+  val:   { fontFamily: "'Courier New', monospace", fontSize: 13, color: "#F5F5F5" },
+  muted: { fontFamily: "'Courier New', monospace", fontSize: 11, color: "#999" },
+};
 
 export default function OrderPanel({ mode, onModeChange, onRun, onResult }: Props) {
   const [weth, setWeth] = useState<number>(config.wethAmountDefault);
@@ -59,91 +59,84 @@ export default function OrderPanel({ mode, onModeChange, onRun, onResult }: Prop
       onRun(runData.steps as import("./Terminal").TerminalLine[]);
     } else {
       const sim = simulate(weth);
-      const simResult: SimResult = { kind: "simulated", takerReceivedWeth: weth, ...sim };
-      onResult(simResult);
+      onResult({ kind: "simulated", takerReceivedWeth: weth, ...sim });
       if (!sim.ok) {
         onRun([{ kind: "warn", label: "quote", text: sim.noQuoteReason ?? "No quote" }]);
         return;
       }
-      const lines: import("./Terminal").TerminalLine[] = [
-        { kind: "info", label: "order",  text: `buy ${weth} WETH  simulated from pool snapshot` },
-        { kind: "info", label: "unlock", text: "PoolManager.unlock() — flash accounting session" },
-        ...sim.legs.map((l, i) => ({
-          kind: "info" as const,
-          label: `swap ${String.fromCharCode(65 + i)}`,
-          text: `${l.pool}  → ${l.wethOut.toFixed(6)} WETH  cost ${(l.usdcIn).toFixed(2)} USDC`,
-        })),
-        { kind: "ok",   label: "take",   text: `${weth} WETH → taker  (Maker never touched WETH)` },
-        { kind: "ok",   label: "settle", text: `USDC owed to pools: ${(sim.routeCostUsdc / 1e6).toFixed(6)}` },
-        { kind: "ok",   label: "pay",    text: `maker proceeds: ${(sim.makerProceedsUsdc / 1e6).toFixed(6)} USDC` },
+      onRun([
+        { kind: "info", label: "order",  text: `buy ${weth} WETH — simulated` },
+        { kind: "info", label: "unlock", text: "PoolManager.unlock()" },
+        ...sim.legs.map((l, i) => ({ kind: "info" as const, label: `swap ${String.fromCharCode(65+i)}`, text: `${l.pool} → ${l.wethOut.toFixed(6)} WETH` })),
+        { kind: "ok",   label: "take",   text: `${weth} WETH → taker` },
+        { kind: "ok",   label: "settle", text: `USDC to pools: ${(sim.routeCostUsdc/1e6).toFixed(6)}` },
+        { kind: "ok",   label: "pay",    text: `maker proceeds: ${(sim.makerProceedsUsdc/1e6).toFixed(6)} USDC` },
         { kind: "ok",   label: "done",   text: "simulated — not broadcast" },
-      ];
-      onRun(lines);
+      ]);
     }
   };
 
   const sim = mode === "playground" ? simulate(weth) : null;
-  const recDirect = parseFloat(runData.directCostUsdc) || 0;
   const recQuote  = parseFloat(runData.quoteUsdc) || 0;
+  const recDirect = parseFloat(runData.directCostUsdc) || 0;
 
   return (
-    <GlassPanel className="flex flex-col gap-5 p-5">
-      {/* Segmented control */}
-      <div className="flex rounded-sm overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 0 }}>
+
+      {/* Mode toggle */}
+      <div style={{ display: "flex", borderBottom: "1px solid #222", marginBottom: 28 }}>
         {(["recorded", "playground"] as Mode[]).map(m => (
-          <button
-            key={m}
-            onClick={() => onModeChange(m)}
-            className={`flex-1 py-2 text-sm font-medium transition-colors capitalize ${
-              mode === m
-                ? "text-[var(--text)]"
-                : "text-muted-2 hover:text-[var(--text)]"
-            }`}
-            style={{ background: mode === m ? "var(--accent-dim)" : "transparent" }}
-          >
+          <button key={m} onClick={() => onModeChange(m)}
+            style={{
+              flex: 1, padding: "10px 0", fontSize: 10, fontWeight: 700,
+              letterSpacing: "0.12em", textTransform: "uppercase",
+              color: mode === m ? "#FFF" : "#444",
+              background: "transparent", border: "none",
+              borderBottom: mode === m ? "2px solid #FFF" : "2px solid transparent",
+              cursor: "pointer", marginBottom: -1, transition: "all 0.1s",
+            }}>
             {m === "recorded" ? "Recorded run" : "Playground"}
           </button>
         ))}
       </div>
 
-      {/* Playground disclaimer */}
       {mode === "playground" && (
-        <p className="text-xs text-warn px-1">
-          Simulated from a snapshot of the seeded pools. Not a live market.
+        <p style={{ ...S.muted, marginBottom: 20, color: "#F59E0B" }}>
+          ⚠ Simulated from pool snapshot. Not live.
         </p>
       )}
 
-      {/* Size */}
-      <div className="flex flex-col gap-2">
-        <label htmlFor="weth-slider" className="text-xs text-muted-2 uppercase tracking-wider">
-          Buy WETH with USDC
-        </label>
-        <div className="flex items-center gap-3">
-          <input
-            id="weth-slider"
-            type="range"
-            min={config.wethAmountMin}
-            max={config.wethAmountMax}
-            step={0.0001}
-            value={weth}
-            onChange={e => setWeth(parseFloat(e.target.value))}
-            className="flex-1 accent-[var(--accent)]"
-            disabled={mode === "recorded"}
-          />
-          <span className="font-mono text-sm text-[var(--text)] w-20 text-right">{weth.toFixed(4)} WETH</span>
+      {/* Direction */}
+      <div style={{ marginBottom: 24 }}>
+        <span style={S.label}>Direction</span>
+        <div style={{ padding: "10px 14px", background: "#111", border: "1px solid #222" }}>
+          <span style={S.val}>Buy WETH with USDC</span>
         </div>
-        {/* Presets */}
-        <div className="flex gap-2">
+      </div>
+
+      {/* Size */}
+      <div style={{ marginBottom: 24 }}>
+        <span style={S.label}>Size</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+          <input type="range"
+            min={config.wethAmountMin} max={config.wethAmountMax} step={0.0001}
+            value={weth} onChange={e => setWeth(parseFloat(e.target.value))}
+            disabled={mode === "recorded"}
+            style={{ flex: 1, accentColor: "#FFF", cursor: mode === "recorded" ? "not-allowed" : "pointer" }}
+          />
+          <span style={{ ...S.val, width: 90, textAlign: "right" }}>{weth.toFixed(4)} WETH</span>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
           {PRESETS.map(p => (
-            <button
-              key={p}
-              onClick={() => setWeth(p)}
-              disabled={mode === "recorded"}
-              className={`px-2 py-1 rounded text-xs font-mono transition-colors ${
-                weth === p ? "text-accent bg-accent-dim" : "text-muted-2 hover:text-[var(--text)]"
-              }`}
-              style={{ border: "1px solid var(--border)" }}
-            >
+            <button key={p} onClick={() => setWeth(p)} disabled={mode === "recorded"}
+              style={{
+                fontFamily: "'Courier New', monospace", fontSize: 10,
+                letterSpacing: "0.1em", padding: "4px 10px",
+                background: weth === p ? "#FFF" : "transparent",
+                color: weth === p ? "#000" : "#444",
+                border: "1px solid #333", cursor: "pointer",
+                transition: "all 0.1s",
+              }}>
               {p}
             </button>
           ))}
@@ -151,71 +144,42 @@ export default function OrderPanel({ mode, onModeChange, onRun, onResult }: Prop
       </div>
 
       {/* Quote comparison */}
-      <div className="rounded-sm p-4 flex flex-col gap-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-        <p className="text-xs text-muted-2 uppercase tracking-wider">Quote comparison</p>
+      <div style={{ background: "#111", border: "1px solid #222", padding: 16, marginBottom: 24 }}>
+        <span style={{ ...S.label, marginBottom: 14 }}>Quote comparison</span>
 
         {mode === "playground" && sim && !sim.ok ? (
-          <p className="text-sm text-warn">{sim.noQuoteReason}</p>
+          <p style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: "#F59E0B", lineHeight: 1.5 }}>{sim.noQuoteReason}</p>
         ) : (
           <>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-2">Direct route</span>
-              <span className="font-mono">
-                {mode === "recorded"
-                  ? (recDirect ? fmtUsdc(runData.directCostUsdc) + " USDC" : "—")
-                  : (sim?.directCostUsdc ? fmtUsdc(sim.directCostUsdc) + " USDC" : "—")}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-accent font-medium">CAPITLESS quote</span>
-              <span className="font-mono text-accent">
-                {mode === "recorded"
-                  ? fmtUsdc(runData.quoteUsdc) + " USDC"
-                  : (sim?.ok ? fmtUsdc(sim.quoteUsdc) + " USDC" : "—")}
-              </span>
-            </div>
-
-            {/* Bar */}
-            {(mode === "recorded" ? recDirect && recQuote : sim?.ok) && (
-              <div className="flex gap-1 items-center h-2 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
-                <div
-                  className="h-full transition-all"
-                  style={{
-                    width: `${bar(
-                      mode === "recorded" ? recQuote : sim!.quoteUsdc,
-                      mode === "recorded" ? recDirect : sim!.directCostUsdc
-                    )}%`,
-                    background: "var(--accent)",
-                  }}
-                />
-              </div>
-            )}
-
-            <div className="flex justify-between text-xs text-muted-2">
-              <span>Maker proceeds</span>
-              <span className="font-mono text-ok">
-                {mode === "recorded"
-                  ? fmtUsdc(runData.makerProceedsUsdc) + " USDC"
-                  : (sim?.ok ? fmtUsdc(sim.makerProceedsUsdc) + " USDC" : "—")}
-              </span>
-            </div>
+            <Row label="Direct route" value={mode === "recorded" ? (recDirect ? fmtUsdc(recDirect) + " USDC" : "—") : (sim?.directCostUsdc ? fmtUsdc(sim.directCostUsdc) + " USDC" : "—")} dim />
+            <Row label="CAPITLESS quote" value={mode === "recorded" ? fmtUsdc(recQuote) + " USDC" : (sim?.ok ? fmtUsdc(sim.quoteUsdc) + " USDC" : "—")} highlight />
+            <Row label="Maker proceeds" value={mode === "recorded" ? fmtUsdc(runData.makerProceedsUsdc) + " USDC" : (sim?.ok ? fmtUsdc(sim.makerProceedsUsdc) + " USDC" : "—")} ok />
           </>
         )}
       </div>
 
       {/* Run button */}
-      <button
-        onClick={handleRun}
-        className="w-full py-3 rounded font-semibold text-sm transition-all hover:opacity-90 active:scale-[.98]"
-        style={{ background: "var(--accent)", color: "#0B1220" }}
+      <button onClick={handleRun}
+        style={{
+          width: "100%", padding: "16px", background: "#FFF", color: "#000",
+          fontFamily: "'Arial Black', sans-serif", fontWeight: 900,
+          fontSize: 13, letterSpacing: "0.15em", textTransform: "uppercase",
+          border: "none", cursor: "pointer", transition: "opacity 0.1s",
+        }}
+        onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
+        onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
       >
-        Run order
+        Run order →
       </button>
+    </div>
+  );
+}
 
-      {/* Badge */}
-      <p className="text-center text-xs text-muted-2 italic">
-        Seeded test pools. Proves the mechanism, not the market.
-      </p>
-    </GlassPanel>
+function Row({ label, value, dim, highlight, ok }: { label: string; value: string; dim?: boolean; highlight?: boolean; ok?: boolean }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #1A1A1A" }}>
+      <span style={{ fontFamily: "'Courier New', monospace", fontSize: 11, color: "#999", letterSpacing: "0.05em" }}>{label}</span>
+      <span style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: ok ? "#22C55E" : highlight ? "#FFF" : "#555", fontWeight: highlight ? 700 : 400 }}>{value}</span>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 
+// In the brutalist theme GlassPanel is just a surface panel — no blur.
 interface Props {
   children?: ReactNode;
   className?: string;
@@ -11,8 +12,12 @@ interface Props {
 export default function GlassPanel({ children, className = "", accentBorder = false, style, ...rest }: Props) {
   return (
     <div
-      className={`glass rounded-[var(--radius)] ${accentBorder ? "border-[var(--border-accent)]" : ""} ${className}`}
-      style={style}
+      className={className}
+      style={{
+        background: "#111",
+        border: accentBorder ? "1px solid #FFF" : "1px solid #222",
+        ...style,
+      }}
       {...rest}
     >
       {children}

@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import GlassPanel from "./GlassPanel";
 
 export interface TerminalLine {
   kind: "info" | "ok" | "warn" | "error";
@@ -15,30 +14,25 @@ interface Props {
 }
 
 const kindColor: Record<string, string> = {
-  ok:    "var(--ok)",
-  warn:  "var(--warn)",
-  error: "var(--danger)",
-  info:  "var(--muted-2)",
+  ok:    "#22C55E",
+  warn:  "#F59E0B",
+  error: "#EF4444",
+  info:  "#999999",
 };
 
 export default function Terminal({ lines, running, onDone }: Props) {
-  const [shown, setShown] = useState<TerminalLine[]>([]);
-  const [idx, setIdx]     = useState(0);
+  const [shown, setShown]     = useState<TerminalLine[]>([]);
+  const [idx, setIdx]         = useState(0);
   const [skipped, setSkipped] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bottomRef             = useRef<HTMLDivElement>(null);
+  const intervalRef           = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset when lines change
-  useEffect(() => {
-    setShown([]);
-    setIdx(0);
-    setSkipped(false);
-  }, [lines]);
+  useEffect(() => { setShown([]); setIdx(0); setSkipped(false); }, [lines]);
 
   useEffect(() => {
     if (!running) return;
     if (idx >= lines.length) { onDone?.(); return; }
-    const delay = 120 + Math.random() * 100;
+    const delay = 140 + Math.random() * 80;
     intervalRef.current = setTimeout(() => {
       setShown(prev => [...prev, lines[idx]]);
       setIdx(i => i + 1);
@@ -48,64 +42,55 @@ export default function Terminal({ lines, running, onDone }: Props) {
 
   const skip = () => {
     if (intervalRef.current) clearTimeout(intervalRef.current);
-    setShown(lines);
-    setIdx(lines.length);
-    setSkipped(true);
-    onDone?.();
+    setShown(lines); setIdx(lines.length); setSkipped(true); onDone?.();
   };
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [shown]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [shown]);
 
   const isDone = idx >= lines.length;
 
   return (
-    <GlassPanel className="flex flex-col overflow-hidden" style={{ minHeight: 340 }}>
+    <div style={{ background: "#080808", borderBottom: "1px solid #222", minHeight: 320, display: "flex", flexDirection: "column" }}>
       {/* Title bar */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)]">
-        <span className="w-3 h-3 rounded-full" style={{ background: "var(--danger)" }} aria-hidden="true" />
-        <span className="w-3 h-3 rounded-full" style={{ background: "var(--warn)" }} aria-hidden="true" />
-        <span className="w-3 h-3 rounded-full" style={{ background: "var(--ok)" }} aria-hidden="true" />
-        <span className="ml-3 font-mono text-xs text-muted-2">capitless / rfq-executor</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", borderBottom: "1px solid #1A1A1A", background: "#111" }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#333" }} />
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#333" }} />
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#333" }} />
+        <span style={{ fontFamily: "'Courier New', monospace", fontSize: 11, color: "#777", marginLeft: 8, letterSpacing: "0.05em" }}>
+          capitless / rfq-executor
+        </span>
         {running && !isDone && (
-          <button
-            onClick={skip}
-            className="ml-auto text-xs text-muted-2 hover:text-[var(--text)] px-2 py-0.5 rounded"
-            style={{ border: "1px solid var(--border)" }}
-          >
-            Skip
+          <button onClick={skip} style={{ marginLeft: "auto", fontFamily: "'Courier New', monospace", fontSize: 10, color: "#777", background: "none", border: "1px solid #333", padding: "2px 8px", cursor: "pointer", letterSpacing: "0.1em" }}>
+            SKIP
           </button>
         )}
       </div>
 
-      {/* Log area */}
+      {/* Log */}
       <div
-        className="flex-1 p-4 overflow-y-auto font-mono text-xs leading-relaxed"
-        style={{ minHeight: 280, maxHeight: 380 }}
+        style={{ flex: 1, padding: "16px", overflowY: "auto", minHeight: 260, maxHeight: 400, fontFamily: "'Courier New', monospace", fontSize: 12, lineHeight: 1.8 }}
         aria-live="polite"
         aria-label="Transaction log"
       >
         {shown.length === 0 && !running && (
-          <span className="text-muted-2">Press &quot;Run order&quot; to start.</span>
+          <span style={{ color: "#555" }}>$ press &quot;RUN ORDER&quot; to start_</span>
         )}
         {shown.map((line, i) => (
-          <div key={i} className="flex gap-3 mb-1">
-            <span className="w-14 shrink-0 font-semibold" style={{ color: kindColor[line.kind] }}>
+          <div key={i} style={{ display: "flex", gap: 16, marginBottom: 2 }}>
+            <span style={{ width: 56, flexShrink: 0, color: kindColor[line.kind], fontWeight: 700, letterSpacing: "0.05em" }}>
               {line.label}
             </span>
-            <span style={{ color: line.kind === "error" ? "var(--danger)" : "var(--text)" }}>
+            <span style={{ color: line.kind === "error" ? "#EF4444" : line.kind === "ok" ? "#F5F5F5" : "#888" }}>
               {line.text}
             </span>
           </div>
         ))}
         {running && !isDone && !skipped && (
-          <span className="inline-block w-2 h-4 ml-1" style={{ background: "var(--accent)", animation: "blink 1s step-end infinite" }} aria-hidden="true" />
+          <span style={{ display: "inline-block", width: 8, height: 14, background: "#F5F5F5", animation: "blink 1s step-end infinite" }} aria-hidden="true" />
         )}
         <div ref={bottomRef} />
       </div>
-
-      <style>{`@keyframes blink { 0%,100% { opacity:1 } 50% { opacity:0 } }`}</style>
-    </GlassPanel>
+      <style>{`@keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }`}</style>
+    </div>
   );
 }

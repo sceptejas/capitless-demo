@@ -1,14 +1,7 @@
-import GlassPanel from "./GlassPanel";
 import HashDisplay from "./HashDisplay";
 import type { RecordedResult, SimResult } from "./OrderPanel";
 
 type Result = RecordedResult | SimResult;
-
-function fmt(n: string | number, decimals = 6) {
-  const v = typeof n === "string" ? parseFloat(n) : n;
-  if (isNaN(v) || v === 0) return "—";
-  return v.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-}
 
 function fmtUsdc(n: string | number) {
   const v = typeof n === "string" ? parseFloat(n) : n;
@@ -19,54 +12,74 @@ function fmtUsdc(n: string | number) {
 export default function ResultStrip({ result }: { result: Result | null }) {
   if (!result) return null;
   const isRec = result.kind === "recorded";
-  const label = isRec ? "Recorded" : "Simulated";
-  const labelColor = isRec ? "var(--accent)" : "var(--warn)";
-
-  const taker  = fmt(result.takerReceivedWeth);
   const route  = isRec ? fmtUsdc((result as RecordedResult).routeCostUsdc) : fmtUsdc((result as SimResult).routeCostUsdc);
   const maker  = isRec ? fmtUsdc((result as RecordedResult).makerProceedsUsdc) : fmtUsdc((result as SimResult).makerProceedsUsdc);
+  const taker  = typeof result.takerReceivedWeth === "string"
+    ? parseFloat(result.takerReceivedWeth).toFixed(6)
+    : (result.takerReceivedWeth as number).toFixed(6);
   const wBefore = isRec ? (result as RecordedResult).makerWethBefore : "0";
   const wAfter  = isRec ? (result as RecordedResult).makerWethAfter  : "0";
 
   return (
-    <div className="mt-4 flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: labelColor + "22", color: labelColor, border: `1px solid ${labelColor}55` }}>
-          {label}
-        </span>
-        {isRec && <HashDisplay hash={(result as RecordedResult).txHash} kind="tx" />}
+    <div style={{ borderTop: "1px solid #222" }}>
+      {/* Stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderBottom: "1px solid #1A1A1A" }}>
+        <Cell label="Taker received" value={`${taker} WETH`} />
+        <Cell label="Route cost" value={`${route} USDC`} border />
+        <Cell label="Maker earned" value={`${maker} USDC`} color="#22C55E" border />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <Tile label="Taker received" value={`${taker} WETH`} />
-        <Tile label="Route cost" value={`${route} USDC`} />
-        <Tile label="Maker earned" value={`${maker} USDC`} color="var(--ok)" />
-      </div>
-
-      {/* KEY PROOF TILE */}
-      <GlassPanel accentBorder className="p-4 flex items-center justify-between gap-4">
+      {/* KEY PROOF — Maker WETH = 0 */}
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        padding: "16px 24px",
+        background: "#0D0D0D",
+        borderBottom: "2px solid #FFFFFF",
+        borderLeft: "2px solid #FFFFFF",
+      }}>
         <div>
-          <p className="text-xs text-muted-2 uppercase tracking-wider mb-1">Maker WETH balance</p>
-          <p className="font-mono text-lg font-semibold">
-            <span style={{ color: "var(--muted-2)" }}>{wBefore}</span>
-            <span className="mx-2 text-muted-2">→</span>
-            <span style={{ color: "var(--accent)" }}>{wAfter}</span>
+          <p style={{ fontFamily: "'Courier New', monospace", fontSize: 10, color: "#999", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 6 }}>
+            Maker WETH balance
+          </p>
+          <p style={{ fontFamily: "'Courier New', monospace", fontSize: 18, fontWeight: 700, color: "#F5F5F5" }}>
+            <span style={{ color: "#999" }}>{wBefore}</span>
+            <span style={{ color: "#555", margin: "0 12px" }}>→</span>
+            <span style={{ color: "#FFF" }}>{wAfter}</span>
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-2 mb-1">Zero inventory</p>
-          <p className="text-xs text-accent font-mono">Maker never held WETH</p>
+        <div style={{ textAlign: "right" }}>
+          <p style={{ fontFamily: "'Arial Black', sans-serif", fontSize: 11, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", color: "#FFF", marginBottom: 4 }}>
+            Zero inventory
+          </p>
+          <p style={{ fontFamily: "'Courier New', monospace", fontSize: 10, color: "#999" }}>
+            Maker never held WETH
+          </p>
+          {isRec && (
+            <div style={{ marginTop: 6 }}>
+              <HashDisplay hash={(result as RecordedResult).txHash} kind="tx" />
+            </div>
+          )}
         </div>
-      </GlassPanel>
+      </div>
+
+      {/* Label */}
+      <div style={{ padding: "8px 24px", background: "#080808" }}>
+        <span style={{ fontFamily: "'Courier New', monospace", fontSize: 10, color: "#777", letterSpacing: "0.1em" }}>
+          {isRec ? "● RECORDED — from real onchain tx" : "◌ SIMULATED — from pool snapshot"}
+        </span>
+      </div>
     </div>
   );
 }
 
-function Tile({ label, value, color }: { label: string; value: string; color?: string }) {
+function Cell({ label, value, color, border }: { label: string; value: string; color?: string; border?: boolean }) {
   return (
-    <GlassPanel className="p-3 flex flex-col gap-1">
-      <span className="text-xs text-muted-2">{label}</span>
-      <span className="font-mono text-sm font-semibold" style={{ color: color ?? "var(--text)" }}>{value}</span>
-    </GlassPanel>
+    <div style={{
+      padding: "16px 24px",
+      borderLeft: border ? "1px solid #1A1A1A" : "none",
+    }}>
+      <p style={{ fontFamily: "'Courier New', monospace", fontSize: 10, color: "#999", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>{label}</p>
+      <p style={{ fontFamily: "'Courier New', monospace", fontSize: 13, color: color ?? "#F5F5F5", fontWeight: 700 }}>{value}</p>
+    </div>
   );
 }

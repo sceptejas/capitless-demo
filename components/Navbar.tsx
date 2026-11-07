@@ -15,99 +15,80 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header
-      className="sticky top-0 z-40 w-full"
-      style={{ background: "#080808", borderBottom: "1px solid #222" }}
-    >
+    <header style={{ position: "sticky", top: 0, zIndex: 50, width: "100%", display: "flex", justifyContent: "center", padding: "16px 24px", background: "transparent", pointerEvents: "none" }}>
       <nav
-        className="mx-auto flex items-center justify-between px-6 h-14"
-        style={{ maxWidth: 1100 }}
         aria-label="Main navigation"
+        style={{
+          pointerEvents: "all",
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          padding: "6px 8px",
+          background: "#0F0F0F",
+          border: "1px solid #FFFFFF",
+          borderRadius: 999,
+          backdropFilter: "blur(12px)",
+        }}
       >
         {/* Wordmark */}
-        <Link
-          href="/"
-          style={{
-            fontFamily: "'Arial Black', sans-serif",
-            fontWeight: 900,
-            fontSize: 15,
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-            color: "#F5F5F5",
-          }}
-        >
+        <Link href="/" style={{
+          fontFamily: "'Courier New', monospace",
+          fontWeight: 700,
+          fontSize: 12,
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+          color: "#FFFFFF",
+          padding: "6px 16px",
+          borderRight: "1px solid #333",
+          marginRight: 4,
+          textDecoration: "none",
+          whiteSpace: "nowrap",
+        }}>
           CAPITLESS
         </Link>
 
-        {/* Desktop links */}
-        <ul className="hidden md:flex items-center gap-0" role="list">
-          {links.map(l => (
-            <li key={l.href}>
-              <Link
-                href={l.href}
-                style={{
-                  display: "block",
-                  padding: "0 16px",
-                  height: 56,
-                  lineHeight: "56px",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: pathname === l.href ? "#FFFFFF" : "#888888",
-                  borderBottom: pathname === l.href ? "2px solid #FFFFFF" : "2px solid transparent",
-                  transition: "color 0.1s, border-color 0.1s",
-                }}
-              >
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* GitHub */}
-        <a
-          href={config.links.github}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden md:flex items-center gap-2"
-          style={{
+        {/* Links */}
+        {links.map(l => (
+          <Link key={l.href} href={l.href} style={{
+            fontFamily: "'Courier New', monospace",
             fontSize: 11,
             fontWeight: 700,
             letterSpacing: "0.1em",
             textTransform: "uppercase",
-            color: "#999",
-            border: "1px solid #333",
-            padding: "6px 14px",
-            transition: "all 0.1s",
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#FFF"; (e.currentTarget as HTMLElement).style.borderColor = "#FFF"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#555"; (e.currentTarget as HTMLElement).style.borderColor = "#333"; }}
+            color: pathname === l.href ? "#000000" : "#FFFFFF",
+            background: pathname === l.href ? "#FFFFFF" : "transparent",
+            padding: "7px 16px",
+            borderRadius: 999,
+            textDecoration: "none",
+            transition: "all 0.15s",
+            whiteSpace: "nowrap",
+          }}>
+            {l.label}
+          </Link>
+        ))}
+
+        {/* GitHub */}
+        <a href={config.links.github} target="_blank" rel="noopener noreferrer" style={{
+          fontFamily: "'Courier New', monospace",
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: "#FFFFFF",
+          padding: "7px 16px",
+          borderLeft: "1px solid #333",
+          marginLeft: 4,
+          textDecoration: "none",
+          whiteSpace: "nowrap",
+          opacity: 0.6,
+          transition: "opacity 0.15s",
+        }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+          onMouseLeave={e => (e.currentTarget.style.opacity = "0.6")}
         >
           GitHub ↗
         </a>
-
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden p-2"
-          onClick={() => setOpen(o => !o)}
-          aria-label={open ? "Close menu" : "Open menu"}
-          style={{ color: "#888" }}
-        >
-          {open ? "✕" : "☰"}
-        </button>
       </nav>
-
-      {open && (
-        <div style={{ background: "#080808", borderTop: "1px solid #222" }} className="md:hidden px-6 pb-4 flex flex-col gap-0">
-          {links.map(l => (
-            <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
-              style={{ padding: "12px 0", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: pathname === l.href ? "#FFF" : "#555", borderBottom: "1px solid #1A1A1A" }}>
-              {l.label}
-            </Link>
-          ))}
-        </div>
-      )}
     </header>
   );
 }

@@ -65,7 +65,7 @@ export default function ResultStrip({ result }: { result: Result | null }) {
       {/* Label */}
       <div style={{ padding: "8px 24px", background: "#080808" }}>
         <span style={{ fontFamily: "'Courier New', monospace", fontSize: 10, color: "#777", letterSpacing: "0.1em" }}>
-          {isRec ? "● RECORDED — from real onchain tx" : "◌ SIMULATED — from pool snapshot"}
+          {isRec ? "● RECORDED — from real onchain tx" : "◌ PLAYGROUND — computed from pool snapshot"}
         </span>
       </div>
     </div>

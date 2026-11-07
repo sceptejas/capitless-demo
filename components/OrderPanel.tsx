@@ -19,7 +19,7 @@ export interface RecordedResult {
 }
 
 export interface SimResult {
-  kind: "simulated";
+  kind: "playground";
   quoteUsdc: number;
   routeCostUsdc: number;
   makerProceedsUsdc: number;
@@ -59,19 +59,19 @@ export default function OrderPanel({ mode, onModeChange, onRun, onResult }: Prop
       onRun(runData.steps as import("./Terminal").TerminalLine[]);
     } else {
       const sim = simulate(weth);
-      onResult({ kind: "simulated", takerReceivedWeth: weth, ...sim });
+      onResult({ kind: "playground", takerReceivedWeth: weth, ...sim });
       if (!sim.ok) {
         onRun([{ kind: "warn", label: "quote", text: sim.noQuoteReason ?? "No quote" }]);
         return;
       }
       onRun([
-        { kind: "info", label: "order",  text: `buy ${weth} WETH — simulated` },
+        { kind: "info", label: "order",  text: `buy ${weth} WETH — computed from pool snapshot` },
         { kind: "info", label: "unlock", text: "PoolManager.unlock()" },
         ...sim.legs.map((l, i) => ({ kind: "info" as const, label: `swap ${String.fromCharCode(65+i)}`, text: `${l.pool} → ${l.wethOut.toFixed(6)} WETH` })),
         { kind: "ok",   label: "take",   text: `${weth} WETH → taker` },
         { kind: "ok",   label: "settle", text: `USDC to pools: ${(sim.routeCostUsdc/1e6).toFixed(6)}` },
         { kind: "ok",   label: "pay",    text: `maker proceeds: ${(sim.makerProceedsUsdc/1e6).toFixed(6)} USDC` },
-        { kind: "ok",   label: "done",   text: "simulated — not broadcast" },
+        { kind: "ok",   label: "done",   text: "computed — not broadcast to chain" },
       ]);
     }
   };
@@ -102,7 +102,7 @@ export default function OrderPanel({ mode, onModeChange, onRun, onResult }: Prop
 
       {mode === "playground" && (
         <p style={{ ...S.muted, marginBottom: 20, color: "#F59E0B" }}>
-          ⚠ Simulated from pool snapshot. Not live.
+          ⚠ Computed from pool snapshot. Not a live quote.
         </p>
       )}
 
